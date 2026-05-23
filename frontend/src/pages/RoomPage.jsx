@@ -1,17 +1,9 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
-import { useWebRTC } from '@/hooks/useWebRTC';
-import Link from 'next/link';
+import { useParams } from 'react-router-dom';
+import { useWebRTC } from '../hooks/useWebRTC';
 
-interface RoomPageProps {
-  params: {
-    roomId: string;
-  };
-}
-
-function RemoteVideo({ id, stream }: { id: string; stream: MediaStream }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+function RemoteVideo({ id, stream }) {
+  const videoRef = useRef(null);
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -34,8 +26,8 @@ function RemoteVideo({ id, stream }: { id: string; stream: MediaStream }) {
   );
 }
 
-export default function RoomPage({ params }: RoomPageProps) {
-  const { roomId } = params;
+export default function RoomPage() {
+  const { roomId } = useParams();
   const {
     localStream,
     remoteStreams,
@@ -47,25 +39,25 @@ export default function RoomPage({ params }: RoomPageProps) {
     toggleCamera,
     hangUp,
     sendMessage
-  } = useWebRTC({ roomId });
+  } = useWebRTC({ roomId: roomId || '' });
 
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const localVideoRef = useRef(null);
+  const chatEndRef = useRef(null);
   const [chatInput, setChatInput] = useState('');
 
-  // Assign local stream to video element
+  // Assign local stream
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream]);
 
-  // Auto-scroll chat to bottom
+  // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendChat = (e: React.FormEvent) => {
+  const handleSendChat = (e) => {
     e.preventDefault();
     if (chatInput.trim() !== '') {
       sendMessage(chatInput);
@@ -77,7 +69,6 @@ export default function RoomPage({ params }: RoomPageProps) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Header bar */}
       <header className="px-6 py-4 bg-slate-900/60 backdrop-blur-md border-b border-slate-800 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 rounded-full bg-indigo-500 animate-pulse" />
@@ -85,11 +76,10 @@ export default function RoomPage({ params }: RoomPageProps) {
             Partnr Space
           </h1>
           <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-medium">
-            Room: {roomId.substring(0, 8)}...
+            Room: {roomId?.substring(0, 8)}...
           </span>
         </div>
 
-        {/* Status Indicators */}
         <div className="flex items-center">
           {connectionStatus === 'waiting' && (
             <div
@@ -121,9 +111,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         </div>
       </header>
 
-      {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col lg:flex-row relative">
-        {/* Call Display Area */}
         <div className="flex-1 p-6 flex flex-col justify-center items-center gap-6 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-y-auto">
           {remoteStreamsList.length === 0 ? (
             <div className="text-center py-20 px-8 rounded-3xl bg-slate-900/40 border border-slate-800/80 max-w-md w-full backdrop-blur-sm">
@@ -161,7 +149,6 @@ export default function RoomPage({ params }: RoomPageProps) {
             </div>
           )}
 
-          {/* Local User View (Floating PIP style when remote stream is active, centered if alone) */}
           <div
             className={`transition-all duration-500 z-30 ${
               remoteStreamsList.length === 0
@@ -196,7 +183,6 @@ export default function RoomPage({ params }: RoomPageProps) {
           </div>
         </div>
 
-        {/* Real-time Chat Sidebar */}
         <aside className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-slate-800/80 bg-slate-900/40 backdrop-blur-md flex flex-col h-[400px] lg:h-auto">
           <div className="p-4 border-b border-slate-800 flex items-center justify-between">
             <h3 className="text-sm font-bold tracking-wider text-slate-300 uppercase">
@@ -207,7 +193,6 @@ export default function RoomPage({ params }: RoomPageProps) {
             </span>
           </div>
 
-          {/* Chat Messages Container */}
           <div
             data-test-id="chat-log"
             className="flex-1 p-4 overflow-y-auto space-y-3 scrollbar-thin"
@@ -220,35 +205,25 @@ export default function RoomPage({ params }: RoomPageProps) {
                 <p className="text-xs">No messages yet. Say hello!</p>
               </div>
             ) : (
-              messages.map((msg, idx) => {
-                const isOwnMessage = msg.senderId.substring(0, 4) === 'Local'; // Fallback check or set on hook
-                return (
-                  <div
-                    key={idx}
-                    data-test-id="chat-message"
-                    className={`flex flex-col max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
-                      msg.senderId === 'system'
-                        ? 'bg-slate-800/40 border border-slate-800/60 text-slate-400 text-xs text-center mx-auto max-w-[95%] py-1'
-                        : 'bg-slate-800/60 text-slate-200 self-start border border-slate-800'
-                    }`}
-                  >
-                    {msg.senderId !== 'system' && (
-                      <span className="text-[10px] font-bold text-indigo-400 mb-0.5">
-                        Peer {msg.senderId.substring(0, 4)}
-                      </span>
-                    )}
-                    <p className="leading-relaxed break-words">{msg.message}</p>
-                    <span className="text-[9px] text-slate-500 self-end mt-1">
-                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                );
-              })
+              messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  data-test-id="chat-message"
+                  className={`flex flex-col max-w-[85%] rounded-2xl px-3 py-2 text-sm bg-slate-800/60 text-slate-200 self-start border border-slate-800`}
+                >
+                  <span className="text-[10px] font-bold text-indigo-400 mb-0.5">
+                    Peer {msg.senderId.substring(0, 4)}
+                  </span>
+                  <p className="leading-relaxed break-words">{msg.message}</p>
+                  <span className="text-[9px] text-slate-500 self-end mt-1">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))
             )}
             <div ref={chatEndRef} />
           </div>
 
-          {/* Chat Form */}
           <form
             onSubmit={handleSendChat}
             className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-2"
@@ -274,9 +249,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         </aside>
       </div>
 
-      {/* Control Actions Bar */}
       <footer className="px-6 py-5 bg-slate-900/80 backdrop-blur-md border-t border-slate-800/80 flex justify-center items-center gap-4 z-40 sticky bottom-0">
-        {/* Toggle Audio Mute */}
         <button
           data-test-id="mute-mic-button"
           onClick={toggleMute}
@@ -299,7 +272,6 @@ export default function RoomPage({ params }: RoomPageProps) {
           )}
         </button>
 
-        {/* Toggle Video Camera */}
         <button
           data-test-id="toggle-camera-button"
           onClick={toggleCamera}
@@ -322,14 +294,13 @@ export default function RoomPage({ params }: RoomPageProps) {
           )}
         </button>
 
-        {/* Hangup / End Call */}
         <button
           data-test-id="hangup-button"
           onClick={hangUp}
           className="p-3.5 rounded-2xl bg-red-600 hover:bg-red-500 hover:scale-105 active:scale-95 text-white border border-red-700 transition-all duration-200 shadow-lg shadow-red-600/20"
           title="Leave / End Call"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="transform rotate-[135deg]">
+          <svg className="w-5 h-5 transform rotate-[135deg]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
           </svg>
         </button>

@@ -1,17 +1,14 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 
-export default function Home() {
-  const router = useRouter();
+export default function HomePage() {
+  const navigate = useNavigate();
   const [roomId, setRoomId] = useState('');
 
   const generateUUID = () => {
     if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
       return window.crypto.randomUUID();
     }
-    // Fallback UUID generator
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
       const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -21,19 +18,18 @@ export default function Home() {
 
   const handleCreateRoom = () => {
     const newRoomId = generateUUID();
-    router.push(`/room/${newRoomId}`);
+    navigate(`/room/${newRoomId}`);
   };
 
-  const handleJoinRoom = (e: React.FormEvent) => {
+  const handleJoinRoom = (e) => {
     e.preventDefault();
     if (roomId.trim() !== '') {
-      router.push(`/room/${roomId.trim()}`);
+      navigate(`/room/${roomId.trim()}`);
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between font-sans overflow-x-hidden relative">
-      {/* Background radial highlight */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-500/10 blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
 
@@ -51,10 +47,9 @@ export default function Home() {
 
       {/* Main Hero Card Section */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20 z-10 py-12">
-        {/* Left column: Text content */}
         <div className="flex-1 text-center lg:text-left space-y-6 max-w-2xl">
           <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold tracking-wider uppercase">
-            ⚡ Ultra Low Latency Real-Time Video
+            ⚡ Ultra Low Latency MERN WebRTC Video
           </span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
             Seamless multi-peer <br className="hidden sm:inline" />
@@ -67,7 +62,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Right column: Space Creator panel */}
         <div className="w-full max-w-md p-8 sm:p-10 rounded-3xl bg-slate-900/40 border border-slate-800/80 backdrop-blur-md shadow-2xl relative">
           <div className="absolute top-0 right-10 transform -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-bold text-[10px] px-3.5 py-1 rounded-full shadow-lg shadow-indigo-500/20 uppercase tracking-widest">
             Ready to deploy
@@ -77,7 +71,6 @@ export default function Home() {
           <p className="text-slate-400 text-xs mb-8">Generate a unique space identifier or enter an existing code to join your team.</p>
 
           <div className="space-y-6">
-            {/* Create new Space */}
             <button
               onClick={handleCreateRoom}
               className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-sm tracking-wide transition-all duration-300 shadow-xl shadow-indigo-600/25 flex items-center justify-center gap-2 group hover:scale-[1.01]"
@@ -94,7 +87,6 @@ export default function Home() {
               <div className="flex-grow border-t border-slate-800" />
             </div>
 
-            {/* Join Space Form */}
             <form onSubmit={handleJoinRoom} className="space-y-3">
               <input
                 type="text"
